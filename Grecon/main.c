@@ -649,7 +649,7 @@ int main(void)
 	measureTemp();
 
 	//TODO: Diesen Wert spaeter entfernen und anfangs leer lassen, weil noch nicht gemessen wurde
-	uint32_t testWert = 489;
+	uint32_t testWert = 999;
 	//testWert[0] = '4';
 	//testWert[1] = '8';
 	//testWert[2] = '9';
