@@ -255,7 +255,7 @@ void measureTemp() {
 	read_meas();
 }
 
-//DAC-Wandler funktion von Ede. 0-1023 digit werden in stromsträrke umgewandelt um die funken für
+//DAC-Wandler funktion von Helge. 0-1023 digit werden in stromsträrke umgewandelt um die funken für
 //die sensoren zu simulieren
 void convertDAC(uint16_t data)
 {
@@ -281,12 +281,18 @@ void convertDAC(uint16_t data)
 }
 
 //Zeigt einen neuen Messwert auf dem Display an
-void updateMesswert(char newVal[]) {
+void updateMesswert(uint32_t newVal) {
 	
 	//Konvertierung des Wertes in einen integer
-	int firstNumber = newVal[0] - '0';
-	int secondNumber = newVal[1] - '0';
-	int thirdNumber = newVal[2] - '0';
+	//int firstNumber = newVal[0] - '0';
+	//int secondNumber = newVal[1] - '0';
+	//int thirdNumber = newVal[2] - '0';
+	
+	uint8_t thirdNumber = newVal % 10;
+	newVal = newVal / 10;
+	uint8_t secondNumber = newVal % 10;
+	newVal = newVal / 10;
+	uint8_t firstNumber = newVal % 10;
 	
 	OLED_ReadMemLetter(firstNumber + 56);
 	OLED_DispImage(letterBuffer,46,46,8,10);
@@ -296,12 +302,12 @@ void updateMesswert(char newVal[]) {
 	OLED_DispImage(letterBuffer,52,46,8,10);
 }
 
-//Funktion fuer die Messung (Aus dem alten Projekt, von EDE).
+//Funktion fuer die Messung (Aus dem alten Projekt, von Helge).
 //schwelle_erkannt: anzahl der messdurchläufe
 //sensor: art des sensor, also fm, hpd oder dld, benötigt für abfrage für schwelle
 //kalib: kalibriermodus ja = 1 oder nein = 0
 //kalib_summe: wo kalibrierter wert im eeprom abgespeichert werden soll
-//data: zur auswahl der leuchtquelle und einstellung der lichstärke. standardmäßig ist die stärke 0
+//data: zur auswahl der leuchtquelle und einstellung der lichstärke. standardmäßig ist die stärke 0 (0x3000 fuer FM und 0xb000 fuer DLD)
 void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_summe, int16_t data)
 {
 	int16_t data1 = data;		//benötigt um impulse mittels der leuchtquellen zu erzeugen
@@ -405,6 +411,8 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 	if (anzahl_erk == schwelle_erkannt)
 	{
 		mittlere_schwelle = all_val/anzahl_erk;
+		OLED_ReadMemLetter(3);	//c
+		OLED_DispImage(letterBuffer,5,100,8,10);
 	}
 	
 	_delay_ms(100);
@@ -417,6 +425,7 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 		eeprom_write_word(&eeFooWordArray1[6], mittlere_schwelle);
 		if (mittlere_schwelle <= schwelle2 && mittlere_schwelle >= schwelle1)
 		{
+			//Smiley bzw. OK NOK Menu
 			PORTD |= (1 << PD7);
 		}
 		else
@@ -425,14 +434,14 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 		}
 	}
 	//ausgabe der gemessenen werte
-	if (mittlere_schwelle |= 0)
+	if (mittlere_schwelle != 0)
 	{
-		char wert[15];
-		_delay_ms(5);
+		//char wert[15];
+		//_delay_ms(5);
 		//uart_puts("mitt. schwelle:");
-		_delay_ms(5);
-		itoa(mittlere_schwelle,wert,10);
-		updateMesswert(wert);
+		//_delay_ms(5);
+		//itoa(mittlere_schwelle,wert,10);
+		updateMesswert(mittlere_schwelle);
 		//uart_puts(wert);
 		//uart_puts("\r\n");
 	}
@@ -522,7 +531,7 @@ void buttonPress() {
 			//kalib_summe: wo kalibrierter wert im eeprom abgespeichert werden soll
 			//data: zur auswahl der leuchtquelle und einstellung der lichstärke. standardmäßig ist die stärke 0
 			//void messung (int schwelle_erkannt, int sensor, int kalib, int kalib_summe, int16_t data)
-			messung(10, (selectedType * 2), 0, 0, 0xb000);
+			messung(10, (selectedType * 2), 0, 0, 0x3000);	//0xb000
 			_TIM0_INT_dis;
 			clearHourglass();
 			break;
@@ -640,10 +649,10 @@ int main(void)
 	measureTemp();
 
 	//TODO: Diesen Wert spaeter entfernen und anfangs leer lassen, weil noch nicht gemessen wurde
-	char testWert[3];
-	testWert[0] = '4';
-	testWert[1] = '8';
-	testWert[2] = '9';
+	uint32_t testWert = 489;
+	//testWert[0] = '4';
+	//testWert[1] = '8';
+	//testWert[2] = '9';
 	updateMesswert(testWert);
 
 	uart_init();
