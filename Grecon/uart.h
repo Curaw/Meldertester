@@ -18,22 +18,22 @@
 //UART initialisieren
 void uart_init(void)
 {
-	UBRRH = UBRR_VAL >> 8;
-	UBRRL = UBRR_VAL & 0xFF;
+	UBRR0H = UBRR_VAL >> 8;
+	UBRR0L = UBRR_VAL & 0xFF;
 	
-	UCSRB |= (1<<TXEN) | (1<<RXEN) | (1<<RXCIE);  // UART TX, RX
-	UCSRC = (1<<URSEL)|(1<<UCSZ1)|(1<<UCSZ0);  // Asynchron 8N1 
+	UCSR0B |= (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0);  // UART TX, RX
+	UCSR0C = (1<<UCSZ01)|(1<<UCSZ00);  // Asynchron 8N1
 
 }
 
 //Char schreiben
 int uart_putc(unsigned char c)
 {
-    while (!(UCSRA & (1<<UDRE)))  /* warten bis Senden moeglich */
+    while (!(UCSR0A & (1<<UDRE0)))  /* warten bis Senden moeglich */
     {
     }                             
  
-    UDR = c;                      /* sende Zeichen */
+    UDR0 = c;                      /* sende Zeichen */
     return 0;
 }
 
@@ -57,16 +57,16 @@ void uart_puti(uint16_t i)
 //Char lesen
 uint8_t uart_getc(void)
 {
-    while (!(UCSRA & (1<<RXC)))   // warten bis Zeichen verfuegbar
+    while (!(UCSR0A & (1<<RXC0)))   // warten bis Zeichen verfuegbar
     {
     }
-    return UDR;                   // Zeichen aus UDR an Aufrufer zurueckgeben
+    return UDR0;                   // Zeichen aus UDR an Aufrufer zurueckgeben
 }
 
 uint8_t uart_getc_tout(uint8_t TOut)
 {
   uint16_t tout = 0;
-  while (!(UCSRA & (1<<RXC)))   // warten bis Zeichen verfuegbar
+  while (!(UCSR0A & (1<<RXC0)))   // warten bis Zeichen verfuegbar
   {
     tout++;
     _delay_ms(1);
@@ -75,7 +75,7 @@ uint8_t uart_getc_tout(uint8_t TOut)
       return 0;
     }
   }
-  return UDR;                   // Zeichen aus UDR an Aufrufer zurueckgeben
+  return UDR0;                   // Zeichen aus UDR an Aufrufer zurueckgeben
 }
 
 //String lesen

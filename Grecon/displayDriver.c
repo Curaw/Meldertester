@@ -15,11 +15,13 @@
 #define reg_sclk PB5
 #define reg_dc	 PB4
 #define reg_ddr DDRB
-#define RST_IDLE 	PORTD |= (1<<PD2)
-#define RST_ACTIVE 	PORTD &= ~(1<<PD2)
+#define RST_IDLE 	PORTD |= (1<<PC3)
+#define RST_ACTIVE 	PORTD &= ~(1<<PC3)
 
 uint8_t letterBuffer[40];
 uint8_t iconBuffer[60];
+uint8_t feedbackCode;
+uint32_t measuredValue;
 
 void OLED_Reset()
 {
@@ -162,7 +164,6 @@ void OLED_HLine(uint8_t yPos) {
 	
 	for (uint8_t i = 0; i < 63; i++)
 	{
-		//OLED_Data(cha[i][j]);
 		OLED_Data(0xff);
 	}
 }
@@ -178,63 +179,62 @@ void OLED_DispImage(unsigned char *img, uint8_t xPos, uint8_t yPos, uint8_t widt
 }
 
 //Liest die einzelnen Buchstaben aus dem Programmspeicher, da der RAM des Mikrocontrollers viel zu klein ist
-//TODO: Dringend mit Char Arrays arbeiten und nicht Zahlen.
 void OLED_ReadMemLetter(uint8_t letterNumber) {
 	char myChar;
 	uint8_t *addressPointer;
 	
 	switch(letterNumber) {
-		//case 1:
-			//addressPointer = &(letterA);
-			//break;
-		//case 2:
-			//addressPointer = &(letterB);
-			//break;
+		case 1:
+			addressPointer = &(letterA);
+			break;
+		case 2:
+			addressPointer = &(letterB);
+			break;
 		case 3:
 			addressPointer = &(letterC);
 			break;
 		case 4:
 			addressPointer = &(letterD);
 			break;
-		//case 5:
-			//addressPointer = &(letterE);
-		//break;
+		case 5:
+			addressPointer = &(letterE);
+		break;
 		case 6:
 			addressPointer = &(letterF);
 			break;
-		//case 7:
-			//addressPointer = &(letterG);
-			//break;
-		//case 8:
-			//addressPointer = &(letterH);
-			//break;
-		//case 9:
-			//addressPointer = &(letterI);
-			//break;
-		//case 10:
-			//addressPointer = &(letterJ);
-			//break;
-		//case 11:
-			//addressPointer = &(letterK);
-			//break;
+		case 7:
+			addressPointer = &(letterG);
+			break;
+		case 8:
+			addressPointer = &(letterH);
+			break;
+		case 9:
+			addressPointer = &(letterI);
+			break;
+		case 10:
+			addressPointer = &(letterJ);
+			break;
+		case 11:
+			addressPointer = &(letterK);
+			break;
 		case 12:
 			addressPointer = &(letterL);
 			break;
 		case 13:
 			addressPointer = &(letterM);
 			break;
-		//case 14:
-			//addressPointer = &(letterN);
-			//break;
-		//case 15:
-			//addressPointer = &(letterO);
-			//break;
+		case 14:
+			addressPointer = &(letterN);
+			break;
+		case 15:
+			addressPointer = &(letterO);
+			break;
 		case 16:
 			addressPointer = &(letterP);
 			break;
-		//case 17:
-			//addressPointer = &(letterQ);
-			//break;
+		case 17:
+			addressPointer = &(letterQ);
+			break;
 		case 18:
 			addressPointer = &(letterR);
 			break;
@@ -244,63 +244,63 @@ void OLED_ReadMemLetter(uint8_t letterNumber) {
 		case 20:
 			addressPointer = &(letterT);
 			break;
-		//case 21:
-			//addressPointer = &(letterU);
-			//break;
-		//case 22:
-			//addressPointer = &(letterV);
-			//break;
-		//case 23:
-			//addressPointer = &(letterW);
-			//break;
-		//case 24:
-			//addressPointer = &(letterX);
-			//break;
-		//case 25:
-			//addressPointer = &(letterY);
-			//break;
-		//case 26:
-			//addressPointer = &(letterZ);
-			//break;
+		case 21:
+			addressPointer = &(letterU);
+			break;
+		case 22:
+			addressPointer = &(letterV);
+			break;
+		case 23:
+			addressPointer = &(letterW);
+			break;
+		case 24:
+			addressPointer = &(letterX);
+			break;
+		case 25:
+			addressPointer = &(letterY);
+			break;
+		case 26:
+			addressPointer = &(letterZ);
+			break;
 		case 27:
 			addressPointer = &(smallA);
 			break;
-		//case 28:
-			//addressPointer = &(smallB);
-			//break;
+		case 28:
+			addressPointer = &(smallB);
+			break;
 		case 29:
 			addressPointer = &(smallC);
 			break;
-		//case 30:
-			//addressPointer = &(smallD);
-			//break;
+		case 30:
+			addressPointer = &(smallD);
+			break;
 		case 31:
 			addressPointer = &(smallE);
 			break;
-		//case 32:
-			//addressPointer = &(smallF);
-			//break;
-		//case 33:
-			//addressPointer = &(smallG);
-			//break;
-		//case 34:
-			//addressPointer = &(smallH);
-			//break;
+		case 32:
+			addressPointer = &(smallF);
+			break;
+		case 33:
+			addressPointer = &(smallG);
+			break;
+		case 34:
+			addressPointer = &(smallH);
+			break;
 		case 35:
 			addressPointer = &(smallI);
 			break;
-		//case 36:
-			//addressPointer = &(smallJ);
-			//break;
-		//case 37:
-			//addressPointer = &(smallK);
-			//break;
-		//case 38:
-			//addressPointer = &(smallL);
-			//break;
-		//case 39:
-			//addressPointer = &(smallM);
-			//break;
+		case 36:
+			addressPointer = &(smallJ);
+			break;
+		case 37:
+			addressPointer = &(smallK);
+			break;
+		case 38:
+			addressPointer = &(smallL);
+			break;
+		case 39:
+			addressPointer = &(smallM);
+			break;
 		case 40:
 			addressPointer = &(smallN);
 			break;
@@ -310,36 +310,36 @@ void OLED_ReadMemLetter(uint8_t letterNumber) {
 		case 42:
 			addressPointer = &(smallP);
 			break;
-		//case 43:
-			//addressPointer = &(smallQ);
-			//break;
+		case 43:
+			addressPointer = &(smallQ);
+			break;
 		case 44:
 			addressPointer = &(smallR);
 			break;
-		//case 45:
-			//addressPointer = &(smallS);
-			//break;
+		case 45:
+			addressPointer = &(smallS);
+			break;
 		case 46:
 			addressPointer = &(smallT);
 			break;
-		//case 47:
-			//addressPointer = &(smallU);
-			//break;
-		//case 48:
-			//addressPointer = &(smallV);
-			//break;
-		//case 49:
-			//addressPointer = &(smallW);
-			//break;
-		//case 50:
-			//addressPointer = &(smallX);
-			//break;
+		case 47:
+			addressPointer = &(smallU);
+			break;
+		case 48:
+			addressPointer = &(smallV);
+			break;
+		case 49:
+			addressPointer = &(smallW);
+			break;
+		case 50:
+			addressPointer = &(smallX);
+			break;
 		case 51:
 			addressPointer = &(smallY);
 			break;
-		//case 52:
-			//addressPointer = &(smallZ);
-			//break;
+		case 52:
+			addressPointer = &(smallZ);
+			break;
 		case 53:
 			addressPointer = &(letterDegree);
 			break;
@@ -381,6 +381,9 @@ void OLED_ReadMemLetter(uint8_t letterNumber) {
 			break;
 		case 66:
 			addressPointer = &(letterClear);
+			break;
+		case 67:
+			addressPointer = &(letterQuestion);
 			break;
 		default:
 			break;
@@ -457,126 +460,229 @@ void OLED_ClearIcon(uint8_t xPos, uint8_t yPos) {
 	OLED_DispImage(iconBuffer,xPos,yPos,12,10);	
 }
 
-//Zeichnet das Menu fuer das Projekt
-//TODO: Dringend auf Char Arrays wechseln, damit hier Zeilen gespart werden koennen
-void OLED_Layout() {
+//Zeichnet einen angegebenen String
+//TODO Das hier funktioniert bisher nur fuer gross- und kleinBuchstaben
+void OLED_ShowString(char textToShow[], uint8_t xPos, uint8_t yPos) {
+	for(int i = 0; textToShow[i] != '\0'; ++i) {
+		if(xPos + (i*2) >= 63) {
+			return;
+		}
+		if(textToShow[i] > 90) {
+			OLED_ReadMemLetter((textToShow[i] - 70 ));	
+			OLED_DispImage(letterBuffer,xPos + (i*4),yPos + 1,8,10);
+		} else {
+			OLED_ReadMemLetter((textToShow[i] - 64 ));
+			OLED_DispImage(letterBuffer,xPos + (i*4),yPos,8,10);
+		}
+	}
+}
 
-	OLED_HLine(0);
-
-	//Poti
-	OLED_ReadMemLetter(16);
-	OLED_DispImage(letterBuffer,15,5,8,10);
-	OLED_ReadMemLetter(41);
-	OLED_DispImage(letterBuffer,18,6,8,10);
-	OLED_ReadMemLetter(46);
-	OLED_DispImage(letterBuffer,21,6,8,10);
-	OLED_ReadMemLetter(35);
-	OLED_DispImage(letterBuffer,24,6,8,10);
-	OLED_ReadMemLetter(54);
-	OLED_DispImage(letterBuffer,27,5,8,10);
-
-	//Temperatur
-	OLED_ReadMemLetter(53);
-	OLED_DispImage(letterBuffer,45,5,8,10);
-	OLED_ReadMemLetter(3);
-	OLED_DispImage(letterBuffer,48,5,8,10);
-
-	//Akku
-	OLED_ReadMemIcon(3);
-	OLED_DispImage(iconBuffer,55,4,12,10);
+void showMesswert() {
+	//Konvertierung des Wertes in einen integer
+	//int firstNumber = newVal[0] - '0';
+	//int secondNumber = newVal[1] - '0';
+	//int thirdNumber = newVal[2] - '0';
 	
-	//Scan
-	OLED_ReadMemLetter(57);
-	OLED_DispImage(letterBuffer,10,30,8,10);
-	OLED_ReadMemLetter(55);
-	OLED_DispImage(letterBuffer,13,30,8,10);
-	OLED_ReadMemLetter(19);
-	OLED_DispImage(letterBuffer,16,30,8,10);
-	OLED_ReadMemLetter(29);
-	OLED_DispImage(letterBuffer,19,31,8,10);
-	OLED_ReadMemLetter(27);
-	OLED_DispImage(letterBuffer,21,31,8,10);
-	OLED_ReadMemLetter(40);
-	OLED_DispImage(letterBuffer,25,31,8,10);
+	uint8_t thirdNumber = measuredValue % 10;
+	measuredValue = measuredValue / 10;
+	uint8_t secondNumber = measuredValue % 10;
+	measuredValue = measuredValue / 10;
+	uint8_t firstNumber = measuredValue % 10;
 	
-	//Type
-	OLED_ReadMemLetter(58);
-	OLED_DispImage(letterBuffer,10,46,8,10);
-	OLED_ReadMemLetter(55);
-	OLED_DispImage(letterBuffer,13,46,8,10);
-	OLED_ReadMemLetter(20);
-	OLED_DispImage(letterBuffer,16,46,8,10);
-	OLED_ReadMemLetter(51);
-	OLED_DispImage(letterBuffer,19,47,8,10);
-	OLED_ReadMemLetter(42);
-	OLED_DispImage(letterBuffer,22,47,8,10);
-	OLED_ReadMemLetter(31);
-	OLED_DispImage(letterBuffer,26,47,8,10);
+	OLED_ReadMemLetter(feedbackCode);
+	OLED_DispImage(letterBuffer,12,46,8,10);
 	
-	//Messung
 	OLED_ReadMemLetter(13);
 	OLED_DispImage(letterBuffer,39,46,8,10);
 	OLED_ReadMemLetter(54);
 	OLED_DispImage(letterBuffer,43,46,8,10);
-	//Ab hier Grad Celsius
-	OLED_ReadMemLetter(53);
-	OLED_DispImage(letterBuffer,55,46,8,10);
-	OLED_ReadMemLetter(3);
-	OLED_DispImage(letterBuffer,58,46,8,10);
-
-	//Poti
-	OLED_ReadMemLetter(59);
-	OLED_DispImage(letterBuffer,10,62,8,10);
-	OLED_ReadMemLetter(55);
-	OLED_DispImage(letterBuffer,13,62,8,10);
-	OLED_ReadMemLetter(16);
-	OLED_DispImage(letterBuffer,16,62,8,10);
-	OLED_ReadMemLetter(41);
-	OLED_DispImage(letterBuffer,19,63,8,10);
-	OLED_ReadMemLetter(46);
-	OLED_DispImage(letterBuffer,22,63,8,10);
-	OLED_ReadMemLetter(35);
-	OLED_DispImage(letterBuffer,26,63,8,10);
-
+	OLED_ReadMemLetter(firstNumber + 56);
+	OLED_DispImage(letterBuffer,46,46,8,10);
+	OLED_ReadMemLetter(secondNumber + 56);
+	OLED_DispImage(letterBuffer,49,46,8,10);
+	OLED_ReadMemLetter(thirdNumber + 56);
+	OLED_DispImage(letterBuffer,52,46,8,10);
+	
 	//Referenz
 	OLED_ReadMemLetter(18);
 	OLED_DispImage(letterBuffer,39,62,8,10);
 	OLED_ReadMemLetter(54);
 	OLED_DispImage(letterBuffer,43,62,8,10);
-	OLED_ReadMemLetter(58);
+	OLED_ReadMemLetter(64);
 	OLED_DispImage(letterBuffer,46,62,8,10);
 	OLED_ReadMemLetter(56);
 	OLED_DispImage(letterBuffer,49,62,8,10);
 	OLED_ReadMemLetter(56);
 	OLED_DispImage(letterBuffer,52,62,8,10);
-	OLED_ReadMemLetter(53);
-	OLED_DispImage(letterBuffer,55,62,8,10);
-	OLED_ReadMemLetter(3);
-	OLED_DispImage(letterBuffer,58,62,8,10);
+	//OLED_ReadMemLetter(53);
+	//OLED_DispImage(letterBuffer,55,62,8,10);
+	//OLED_ReadMemLetter(3);
+	//OLED_DispImage(letterBuffer,58,62,8,10);
 
-	//Start
-	OLED_ReadMemLetter(60);
-	OLED_DispImage(letterBuffer,10,78,8,10);
-	OLED_ReadMemLetter(55);
-	OLED_DispImage(letterBuffer,13,78,8,10);
-	OLED_ReadMemLetter(19);
-	OLED_DispImage(letterBuffer,16,78,8,10);
-	OLED_ReadMemLetter(46);
-	OLED_DispImage(letterBuffer,19,79,8,10);
-	OLED_ReadMemLetter(27);
-	OLED_DispImage(letterBuffer,22,79,8,10);
-	OLED_ReadMemLetter(44);
-	OLED_DispImage(letterBuffer,25,79,8,10);
-	OLED_ReadMemLetter(46);
-	OLED_DispImage(letterBuffer,28,79,8,10);
+}
 
-	//Smiley
-	OLED_ReadMemIcon(11);
-	OLED_DispImage(iconBuffer,55,113,12,10);
-	OLED_ReadMemIcon(12);
-	OLED_DispImage(iconBuffer,48,113,12,10);
+
+//Zeichnet das Menu fuer das Projekt
+void OLED_Layout(uint8_t menuToShow) {
 	
+	OLED_ClearScreen();
+	OLED_HLine(0);
 	OLED_HLine(127);
+	if(menuToShow == 1) {
+		OLED_ShowString("Measurement", 10, 16);
+		OLED_ShowString("complete", 16, 27);
+		showMesswert();
+		return;
+	} else if(menuToShow == 2) {
+		OLED_ShowString("Export", 18, 16);
+		OLED_ReadMemLetter(67);		//?
+		OLED_DispImage(letterBuffer,43,16,8,10);
+		
+		OLED_ShowString("Yes", 28, 32);
+		OLED_ShowString("No", 28, 49);
+	} else {
+		//DLD
+		OLED_ReadMemLetter(4);		//D
+		OLED_DispImage(letterBuffer,0,5,8,10);
+		OLED_ReadMemLetter(12);		//L
+		OLED_DispImage(letterBuffer,3,5,8,10);
+		OLED_ReadMemLetter(4);		//D
+		OLED_DispImage(letterBuffer,6,5,8,10);
+		
+		//Poti
+		OLED_ReadMemLetter(16);
+		OLED_DispImage(letterBuffer,15,5,8,10);
+		OLED_ReadMemLetter(41);
+		OLED_DispImage(letterBuffer,18,6,8,10);
+		OLED_ReadMemLetter(46);
+		OLED_DispImage(letterBuffer,21,6,8,10);
+		OLED_ReadMemLetter(35);
+		OLED_DispImage(letterBuffer,24,6,8,10);
+		OLED_ReadMemLetter(54);
+		OLED_DispImage(letterBuffer,27,5,8,10);
+
+		//Temperatur
+		OLED_ReadMemLetter(53);
+		OLED_DispImage(letterBuffer,45,5,8,10);
+		OLED_ReadMemLetter(3);
+		OLED_DispImage(letterBuffer,48,5,8,10);
+
+		//Akku
+		OLED_ReadMemIcon(3);
+		OLED_DispImage(iconBuffer,55,4,12,10);
+	
+		//Scan ID
+		OLED_ReadMemLetter(57);
+		OLED_DispImage(letterBuffer,10,30,8,10);
+		OLED_ReadMemLetter(55);
+		OLED_DispImage(letterBuffer,13,30,8,10);
+		OLED_ReadMemLetter(19);
+		OLED_DispImage(letterBuffer,16,30,8,10);
+		OLED_ReadMemLetter(29);
+		OLED_DispImage(letterBuffer,19,31,8,10);
+		OLED_ReadMemLetter(27);
+		OLED_DispImage(letterBuffer,21,31,8,10);
+		OLED_ReadMemLetter(40);
+		OLED_DispImage(letterBuffer,25,31,8,10);
+		OLED_ReadMemLetter(9);
+		OLED_DispImage(letterBuffer,31,31,8,10);
+		OLED_ReadMemLetter(4);
+		OLED_DispImage(letterBuffer,35,31,8,10);
+	
+		//Scan SN
+		OLED_ReadMemLetter(58);
+		OLED_DispImage(letterBuffer,10,46,8,10);
+		OLED_ReadMemLetter(55);
+		OLED_DispImage(letterBuffer,13,46,8,10);
+		OLED_ReadMemLetter(19);
+		OLED_DispImage(letterBuffer,16,46,8,10);
+		OLED_ReadMemLetter(29);
+		OLED_DispImage(letterBuffer,19,47,8,10);
+		OLED_ReadMemLetter(27);
+		OLED_DispImage(letterBuffer,21,47,8,10);
+		OLED_ReadMemLetter(40);
+		OLED_DispImage(letterBuffer,25,47,8,10);
+		OLED_ReadMemLetter(19);
+		OLED_DispImage(letterBuffer,31,47,8,10);
+		OLED_ReadMemLetter(14);
+		OLED_DispImage(letterBuffer,35,47,8,10);
+
+		//OLED_ReadMemLetter(58);
+		//OLED_DispImage(letterBuffer,10,46,8,10);
+		//OLED_ReadMemLetter(55);
+		//OLED_DispImage(letterBuffer,13,46,8,10);
+		//OLED_ReadMemLetter(20);
+		//OLED_DispImage(letterBuffer,16,46,8,10);
+		//OLED_ReadMemLetter(51);
+		//OLED_DispImage(letterBuffer,19,47,8,10);
+		//OLED_ReadMemLetter(42);
+		//OLED_DispImage(letterBuffer,22,47,8,10);
+		//OLED_ReadMemLetter(31);
+		//OLED_DispImage(letterBuffer,26,47,8,10);
+	
+		//Messung
+		//OLED_ReadMemLetter(13);
+		//OLED_DispImage(letterBuffer,39,46,8,10);
+		//OLED_ReadMemLetter(54);
+		//OLED_DispImage(letterBuffer,43,46,8,10);
+		//Ab hier Grad Celsius
+		//OLED_ReadMemLetter(53);
+		//OLED_DispImage(letterBuffer,55,46,8,10);
+		//OLED_ReadMemLetter(3);
+		//OLED_DispImage(letterBuffer,58,46,8,10);
+
+		//Poti
+		OLED_ReadMemLetter(59);
+		OLED_DispImage(letterBuffer,10,62,8,10);
+		OLED_ReadMemLetter(55);
+		OLED_DispImage(letterBuffer,13,62,8,10);
+		OLED_ReadMemLetter(16);
+		OLED_DispImage(letterBuffer,16,62,8,10);
+		OLED_ReadMemLetter(41);
+		OLED_DispImage(letterBuffer,19,63,8,10);
+		OLED_ReadMemLetter(46);
+		OLED_DispImage(letterBuffer,22,63,8,10);
+		OLED_ReadMemLetter(35);
+		OLED_DispImage(letterBuffer,26,63,8,10);
+
+		////Referenz
+		//OLED_ReadMemLetter(18);
+		//OLED_DispImage(letterBuffer,39,62,8,10);
+		//OLED_ReadMemLetter(54);
+		//OLED_DispImage(letterBuffer,43,62,8,10);
+		//OLED_ReadMemLetter(58);
+		//OLED_DispImage(letterBuffer,46,62,8,10);
+		//OLED_ReadMemLetter(56);
+		//OLED_DispImage(letterBuffer,49,62,8,10);
+		//OLED_ReadMemLetter(56);
+		//OLED_DispImage(letterBuffer,52,62,8,10);
+		//OLED_ReadMemLetter(53);
+		//OLED_DispImage(letterBuffer,55,62,8,10);
+		//OLED_ReadMemLetter(3);
+		//OLED_DispImage(letterBuffer,58,62,8,10);
+
+		//Start
+		OLED_ReadMemLetter(60);
+		OLED_DispImage(letterBuffer,10,78,8,10);
+		OLED_ReadMemLetter(55);
+		OLED_DispImage(letterBuffer,13,78,8,10);
+		OLED_ReadMemLetter(19);
+		OLED_DispImage(letterBuffer,16,78,8,10);
+		OLED_ReadMemLetter(46);
+		OLED_DispImage(letterBuffer,19,79,8,10);
+		OLED_ReadMemLetter(27);
+		OLED_DispImage(letterBuffer,22,79,8,10);
+		OLED_ReadMemLetter(44);
+		OLED_DispImage(letterBuffer,25,79,8,10);
+		OLED_ReadMemLetter(46);
+		OLED_DispImage(letterBuffer,28,79,8,10);
+
+		//Smiley
+		//OLED_ReadMemIcon(11);
+		//OLED_DispImage(iconBuffer,55,113,12,10);
+		//OLED_ReadMemIcon(12);
+		//OLED_DispImage(iconBuffer,48,113,12,10);		
+	}
 }
 
 //Zeichnet ein DebugLayout mit allen Symbolen

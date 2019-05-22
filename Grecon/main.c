@@ -42,7 +42,7 @@ volatile uint8_t uart_str_count = 0;
 #define UART_MAXSTRLEN 20
 volatile char uart_string[UART_MAXSTRLEN + 1] = "";
 uint8_t uart_str_len;
-#define Trigger PD4
+#define Trigger PIND4 //vorher PD4
 #define triggerOn  PORTD |= (1 << Trigger);
 #define Trigeroff PORTD &= ~(1 << Trigger);
 //#define LEDtog PORTD ^= (1 << LED);
@@ -63,15 +63,15 @@ uint8_t updateHourglassAnim;
 uint8_t hourglassOnScan;
 
 //Timer fuer die Sanduhr
-#define _TIM0_INT_en    TIMSK |= (1 << TOIE1);
-#define _TIM0_INT_dis   TIMSK &= ~(1 << TOIE1);
-#define _RXCIE_INT_en    UCSRB |= (1 << RXCIE);
-#define _RXCIE_INT_dis   UCSRB &= ~(1 << RXCIE);
+#define _TIM0_INT_en    TIMSK1 |= (1 << TOIE1);
+#define _TIM0_INT_dis   TIMSK1 &= ~(1 << TOIE1);
+#define _RXCIE_INT_en    UCSR0B |= (1 << RXCIE0);
+#define _RXCIE_INT_dis   UCSR0B &= ~(1 << RXCIE0);
 
 //Encoder
-#define BUTTON_MASK_0 (1<<PC0)
-#define BUTTON_MASK_1 (1<<PC1)
-#define BUTTON_MASK_2 (1<<PC2)
+#define BUTTON_MASK_0 (1<<PINC0)
+#define BUTTON_MASK_1 (1<<PINC1)
+#define BUTTON_MASK_2 (1<<PINC2)
 #define BUTTON_PIN PINC
 #define BUTTON_PORT PORTC
 volatile uint8_t button_down;	//1 = Encoder wurde gedrueckt
@@ -82,9 +82,9 @@ volatile uint8_t button_down;	//1 = Encoder wurde gedrueckt
 
 //DAC-Wandler
 #define reg_portDAC PORTB
-#define reg_dataDAC PB0
-#define reg_sclkDAC PB1
-#define reg_csDAC   PB2
+#define reg_dataDAC PINB0 //vorher PB0
+#define reg_sclkDAC PINB1   //vorher PB1
+#define reg_csDAC   PINB2   //vorher PB2
 
 //globale initialisierungen
 uint16_t eeFooWordArray1[5] EEMEM; //eeprom
@@ -186,13 +186,23 @@ void buttonRotation(uint8_t direction) {
 			//Do nothing
 			break;
 		case 1:
-			changeType();
+			//changeType();
 			break;
 		case 2:
 			changePoti(direction);
 			break;
 		case 3:
 			//Do nothing
+			break;
+		case 4:
+			//Do nothing
+			break;
+		case 5:
+			//hier zwischen Export ja/nein wechseln
+			selectedLine = 6;
+			break;
+		case 6:
+			selectedLine = 5;
 			break;
 		default:
 			break;
@@ -280,28 +290,6 @@ void convertDAC(uint16_t data)
 	reg_portDAC |= (1<<reg_csDAC);
 }
 
-//Zeigt einen neuen Messwert auf dem Display an
-void updateMesswert(uint32_t newVal) {
-	
-	//Konvertierung des Wertes in einen integer
-	//int firstNumber = newVal[0] - '0';
-	//int secondNumber = newVal[1] - '0';
-	//int thirdNumber = newVal[2] - '0';
-	
-	uint8_t thirdNumber = newVal % 10;
-	newVal = newVal / 10;
-	uint8_t secondNumber = newVal % 10;
-	newVal = newVal / 10;
-	uint8_t firstNumber = newVal % 10;
-	
-	OLED_ReadMemLetter(firstNumber + 56);
-	OLED_DispImage(letterBuffer,46,46,8,10);
-	OLED_ReadMemLetter(secondNumber + 56);
-	OLED_DispImage(letterBuffer,49,46,8,10);
-	OLED_ReadMemLetter(thirdNumber + 56);
-	OLED_DispImage(letterBuffer,52,46,8,10);
-}
-
 //Funktion fuer die Messung (Aus dem alten Projekt, von Helge).
 //schwelle_erkannt: anzahl der messdurchläufe
 //sensor: art des sensor, also fm, hpd oder dld, benötigt für abfrage für schwelle
@@ -321,8 +309,8 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 	int anzahl_erk = 0;			//anzahl der durchläufe durch den binären suchbaum
 	uint32_t mittlere_schwelle =0;	//wert aller erkannten schwellen durch die anzahl der durchläufe
 	
-	OLED_ClearLetter(0,100);
-	OLED_ClearLetter(5,100);
+	//OLED_ClearLetter(0,100);
+	//OLED_ClearLetter(5,100);
 	
 	//messe so lange bis vorgegebene anzahl an suchdruchläufen erreicht ist
 	while(anzahl_erk < schwelle_erkannt)
@@ -342,7 +330,7 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 			ADCSRA |= (1<<ADSC);
 			while (ADCSRA & (1<<ADSC)){};
 			adc_value = ADCW;
-			if (adc_value > 900)
+			if (adc_value > 992) //vorher 900 (991 -> immer vollausschlag, 992 -> erkennt nie was)
 			{
 				erkannt = 1;
 			}
@@ -359,8 +347,9 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 		if (erkannt == 0 && val == 1023)
 		{
 			//DEBUG-Buchstabe: D
-			OLED_ReadMemLetter(4);
-			OLED_DispImage(letterBuffer,0,100,8,10);
+			feedbackCode = 4;
+			//OLED_ReadMemLetter(4);
+			//OLED_DispImage(letterBuffer,0,100,8,10);
 			//uart_puts("nichts erkannt");
 			//uart_init();
 			//char buffer[8];
@@ -398,8 +387,9 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 				if (nerk_abbruch >4)
 				{
 					//DEBUG-Buchstabe: F
-					OLED_ReadMemLetter(6);
-					OLED_DispImage(letterBuffer,5,100,8,10);
+					feedbackCode = 6;
+					//OLED_ReadMemLetter(6);
+					//OLED_DispImage(letterBuffer,4,100,8,10);
 					//uart_puts("Messung fehlerhaft");
 					//uart_puts("\r\n");
 					break;
@@ -411,8 +401,9 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 	if (anzahl_erk == schwelle_erkannt)
 	{
 		mittlere_schwelle = all_val/anzahl_erk;
-		OLED_ReadMemLetter(3);	//c
-		OLED_DispImage(letterBuffer,5,100,8,10);
+		feedbackCode = 3;
+		//OLED_ReadMemLetter(3);	//C
+		//OLED_DispImage(letterBuffer,8,100,8,10);
 	}
 	
 	_delay_ms(100);
@@ -426,11 +417,11 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 		if (mittlere_schwelle <= schwelle2 && mittlere_schwelle >= schwelle1)
 		{
 			//Smiley bzw. OK NOK Menu
-			PORTD |= (1 << PD7);
+			PORTD |= (1 << PIND7); //vorher PD7
 		}
 		else
 		{
-			PORTD |= (1 << PD6);
+			PORTD |= (1 << PIND6); //vorher PD6
 		}
 	}
 	//ausgabe der gemessenen werte
@@ -441,9 +432,15 @@ void messung (int schwelle_erkannt, uint8_t sensor, uint8_t kalib, int kalib_sum
 		//uart_puts("mitt. schwelle:");
 		//_delay_ms(5);
 		//itoa(mittlere_schwelle,wert,10);
-		updateMesswert(mittlere_schwelle);
+		//updateMesswert(mittlere_schwelle, feedbackCode);
+		measuredValue = mittlere_schwelle;
 		//uart_puts(wert);
 		//uart_puts("\r\n");
+	} else {
+		//DEBUG-Buchstabe: G
+		//feedbackCode = 7;
+		//OLED_ReadMemLetter(7);
+		//OLED_DispImage(letterBuffer,12,100,8,10);
 	}
 	//falls kalibirert wird werden hier die kalibrierten werte in den eeprom geschrieben
 	// und ausgeben um das ergbnis zu überprüfen
@@ -472,7 +469,13 @@ void clearHourglass() {
 
 //Reaktion auf den Klick des Encoders
 void buttonPress() {
-	OLED_ClearIcon(1,30 + (selectedLine * 16));
+	if(selectedLine < 4) {
+		OLED_ClearIcon(1,30 + (selectedLine * 16));
+	} else if(selectedLine == 5) {
+		OLED_ClearIcon(21, 32);
+	} else if(selectedLine == 6) {
+		OLED_ClearIcon(21, 49);
+	}
 	//OLED_ReadMemIcon(6);
 	//OLED_DispImage(iconBuffer,1,30 + (selectedLine * 16),12,10);
 	switch(selectedLine) {
@@ -480,35 +483,33 @@ void buttonPress() {
 		case 0:
 			selectedLine++;
 			//Hier den Scan abwarten
-			hourglassOnScan = 1;
-			_TIM0_INT_en;
-			_RXCIE_INT_en;
-			triggerOn;
-			_delay_ms(1);
-			Trigeroff;
-			OLED_ClearIcon(39,78);
-			for(uint8_t k=0; k<13; k++) {
-				OLED_ClearLetter(0 + (3*k),113);
-			}
-			//char retString[20];
-			//uart_gets(retString,14);
-			while(uart_str_complete == 0) {
-			}
-			char zahl;
-			for(uint8_t k=0; k<uart_str_len-1; k++) {
-				zahl = uart_string[k] - 48;
-				OLED_ReadMemLetter(zahl + 56);
-				OLED_DispImage(letterBuffer,0 + (3*k),113,8,10);
-				uart_str_complete = 0;
-			}
-			_RXCIE_INT_dis;
-			_TIM0_INT_dis;
-			clearHourglass();
+			//hourglassOnScan = 1;
+			//_TIM0_INT_en;
+			//_RXCIE_INT_en;
+			//triggerOn;
+			//_delay_ms(1);
+			//Trigeroff;
+			//OLED_ClearIcon(39,78);
+			//for(uint8_t k=0; k<13; k++) {
+			//	OLED_ClearLetter(0 + (3*k),113);
+			//}
+			//while(uart_str_complete == 0) {
+			//}
+			//char zahl;
+			//for(uint8_t k=0; k<uart_str_len-1; k++) {
+			//	zahl = uart_string[k] - 48;
+			//	OLED_ReadMemLetter(zahl + 56);
+			//	OLED_DispImage(letterBuffer,0 + (3*k),113,8,10);
+			//	uart_str_complete = 0;
+			//}
+			//_RXCIE_INT_dis;
+			//_TIM0_INT_dis;
+			//clearHourglass();
 			break;
 		//DLD oder FM (Das wird nun durch Drehen entschieden und nicht laenger ueber Klick)
 		case 1:
-			selectedLine++;
-			//changeType();
+			selectedLine = selectedLine + 2;
+			changeType();
 			break;
 		//POTI Wert(Das wird nun durch Drehen entschieden und nicht laenger ueber Klick)
 		case 2:
@@ -517,7 +518,7 @@ void buttonPress() {
 			break;
 		//Messung starten
 		case 3:
-			selectedLine = 0;
+			selectedLine++;
 			OLED_ClearIcon(39,30);
 			hourglassOnScan = 0;
 			_TIM0_INT_en;
@@ -531,9 +532,36 @@ void buttonPress() {
 			//kalib_summe: wo kalibrierter wert im eeprom abgespeichert werden soll
 			//data: zur auswahl der leuchtquelle und einstellung der lichstärke. standardmäßig ist die stärke 0
 			//void messung (int schwelle_erkannt, int sensor, int kalib, int kalib_summe, int16_t data)
-			messung(10, (selectedType * 2), 0, 0, 0x3000);	//0xb000
+			messung(2, (selectedType * 2), 0, 0, 0x3000);	//0xb000
 			_TIM0_INT_dis;
 			clearHourglass();
+			//Hier die Ergebnisse in neuem Menu anzeigen
+			OLED_Layout(1);
+			break;
+		case 4:
+			//Klick auf die Ergebnisse fuehren zurueck ins Menue
+			selectedType = 0;
+			selectedLine = 0;
+			OLED_Layout(0);
+		case 5:
+			//Ins mainMenu zurueck
+			DDRD |= (1 << PIND5);
+			PORTD |= (0 << PIND5);
+			uart_puts("test");
+			uart_puts("\n");
+			
+			OLED_Layout(0);
+			selectedLine = 0;
+			break;
+		case 6:
+			//Exportieren
+			DDRD |= (1 << PIND5);
+			PORTD |= (0 << PIND5); //Schaltet den MUX von Barcode auf USB-Ausgabe
+			uart_puts("test"); //Kommt manchmal gut an und manchmal nicht
+			//uart_puts("\0");
+			
+			OLED_Layout(0);
+			selectedLine = 0;
 			break;
 		default:
 			break;
@@ -579,11 +607,11 @@ ISR (TIMER1_OVF_vect) {
 }
 
 //Interrupt fuer den Barcodescanner
-ISR (USART_RXC_vect) {
+ISR (USART_RX_vect) {
   unsigned char nextChar;
 
   // Daten aus dem Puffer lesen
-  nextChar = UDR;
+  nextChar = UDR0;
   if( uart_str_complete == 0 ) {	// wenn uart_string gerade in Verwendung, neues Zeichen verwerfen
 
 	  // Daten werden erst in uart_string geschrieben, wenn nicht String-Ende/max Zeichenlänge erreicht ist/string gerade verarbeitet wird
@@ -606,15 +634,20 @@ int main(void)
 {
 	//Ein und Ausgaenge der Register definieren 0 = Eingang
 	reg_ddr |= (1 << reg_data) | (1 << reg_sclk) | (1 << reg_rclk) | (1 << reg_dc);	//Display
-	DDRD = 0b00010100; 
+	DDRD = 0b10010001; 
 	DDRC = 0b00110000;
-	DDRB |= (1 << PB2);	//Infrarot LED fuer Messung
-	DDRB |= (1 << PB0);	//Infrarot LED fuer Messung
-	DDRB |= (1 << PB1);	//Infrarot LED fuer Messung
+	DDRB |= (1 << PINB2);	//Infrarot LED fuer Messung vorher PB2
+	DDRB |= (1 << PINB0);	//Infrarot LED fuer Messung vorher PB0
+	DDRB |= (1 << PINB1);	//Infrarot LED fuer Messung vorher PB1
+	
+	PORTD |= (0 << PIND5);
+	
+	DDRD |= (1 << PIND2); //Melderspannungsversorgung vorher PD2
+	PORTD |= (1 << PIND2);//Melderspannungsversorgung vorher PD2
 	
 	//adc initialisierungen
 	ADCSRA = (1<<ADEN);
-	ADMUX = (1<<REFS1) | (1<<REFS0);
+	ADMUX = (1<<REFS1) | (1<<REFS0); // vorher 1 1
 	ADMUX |= 7;
 	
 	// Internen Pullup-Resistor auf dem Input-Pin einschalten
@@ -631,16 +664,16 @@ int main(void)
 	OLED_ClearScreen();	//Bildschirm-RAM leeren
 	OLED_Command(0xAF);	//Display einschalten
 	//OLED_DebugLayout
-	OLED_Layout();		//Menue zeigen
+	OLED_Layout(2);		//Menue zeigen
 	
 	//Startkonfiguration einstellen
-	selectedLine = 0;
+	selectedLine = 5;
 	selectedType = 0;
 	selectedPoti = 1;
-	updateType = 1;
-	updatePoti = 1;
+	updateType = 0;
+	updatePoti = 0;
 	showArrow = 1;
-	showHourglass = 1;
+	showHourglass = 0;
 	arrowCounter = 0;
 	hourglassCounter = 0;
 	hourglassAnimCounter = 0;
@@ -649,11 +682,11 @@ int main(void)
 	measureTemp();
 
 	//TODO: Diesen Wert spaeter entfernen und anfangs leer lassen, weil noch nicht gemessen wurde
-	uint32_t testWert = 999;
+	//uint32_t testWert = 999;
 	//testWert[0] = '4';
 	//testWert[1] = '8';
 	//testWert[2] = '9';
-	updateMesswert(testWert);
+	//updateMesswert(testWert);
 
 	uart_init();
 
@@ -784,10 +817,32 @@ int main(void)
 			}
 		}
 		if (showArrow == 1) {
-			OLED_ReadMemIcon(1);
-			OLED_DispImage(iconBuffer,1,30 + (selectedLine * 16),12,10);
-		} else {
-			OLED_ClearIcon(1, 30 + (selectedLine * 16));
+			if(selectedLine < 4) {
+				OLED_ReadMemIcon(1);
+				OLED_DispImage(iconBuffer,1,30 + (selectedLine * 16),12,10);
+			} else if(selectedLine == 5){
+				//Arrow auf Nein vom Export
+				OLED_ReadMemIcon(1);
+				OLED_DispImage(iconBuffer,21,49,12,10);
+				//Arrow auf Ja entfernen
+				OLED_ClearIcon(21, 32);
+			} else if (selectedLine == 6) {
+				//Arrow auf Ja vom Export
+				OLED_ReadMemIcon(1);
+				OLED_DispImage(iconBuffer,21,32,12,10);
+				//Arrow auf Nein entfernen
+				OLED_ClearIcon(21, 49);
+			}
+		} else if(showArrow == 0){
+			if(selectedLine < 4) {
+				OLED_ClearIcon(1, 30 + (selectedLine * 16));
+			} else if(selectedLine == 5){
+				//Arrow auf Nein entfernen
+				OLED_ClearIcon(21, 49);
+			} else if(selectedLine == 6) {
+				//Arrow auf Ja entfernen
+				OLED_ClearIcon(21, 32);
+			}
 		}
     }
 }
